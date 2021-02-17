@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ChatRoom</title>
+    <style>
+        body{
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        #chat-text{
+            font-size: 1.5rem;
+            border: 0.5px solid #34495e;
+            width: 80%;
+            border-radius: 10px;
+            padding: 12.5px;
+        }
+        #input{
+            border-radius: 20px;
+            padding: 10px 15px;
+        }
+        #input:focus{
+            outline: none;
+        }
+        #submit{
+            padding: 7px 12px;
+        }
+        .msgAdded{
+            border-bottom: 1px solid grey;
+            margin-bottom: 5px;
+        }
+    </style>
+  </head>
+  <body>
+    <div id="chat-text" cols="30" rows="10"></div> <br>
+    <input type="text" size="80" id="input"><br>
+    <input type="button" value="Send" id="submit">
+
+    {{ room_name|json_script:"room-name" }}
+    {{ request.user.username|json_script:"user_username" }}
+    <script>
+
+        document.querySelector('#submit').onclick = (e) => {
+            const messageInputDom = document.querySelector('#input')
+            const message = messageInputDom.value;
+            Socket.send(JSON.stringify({
+                'message': message,
+                'username': username,
+            }))
+            messageInputDom.value = ''
+        }
+
+        const roomName = JSON.parse(
+            document.getElementById("room-name").textContent
+        );
+        const username = JSON.parse(
+            document.getElementById("user_username").textContent
+        );
+
+        const Socket = new WebSocket(
+            "ws://" + window.location.host + "/ws/chat/" + roomName + "/"
+        );
+
+            // function loading(){
+            //     console.log('check calling');
+            // }
+        Socket.onmessage = (e) => {
+            const data = JSON.parse(e.data);
+            let chatDiv = document.querySelector('#chat-text');
+            let msgSent = document.createElement('div');
+            let userSent = document.createElement('span');
+            msgSent.classList = 'msgAdded'
+            userSent.classList = 'userSent'
+            userSent.innerHTML = data.username
+            msgSent.innerHTML = data.message;
+            chatDiv.appendChild(msgSent)
+            chatDiv.appendChild(userSent)
+        };
+    </script>
+  </body>
+</html>
